@@ -17,7 +17,6 @@ function clists() {
 function main() {
   return prompt.mainMenu()
     .then(answer => {
-
       if (answer.action === 'Create a new list') {
         return prompt.listCreation()
           .then(answer => data.createList(answer.listName))
