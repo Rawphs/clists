@@ -20,52 +20,77 @@ function main() {
       if (answer.action === 'Create a new list') {
         return prompt.listCreation()
           .then(answer => data.createList(answer.listName))
-          .then(() => options());
+          .then(() => editOptions());
       } else {
-        return data.selectList()
+        return getLists()
           .then(lists => prompt.viewLists(lists))
           .then(answer => data.list.id = answer.list)
-          .then(() => options());
+          .then(() => editOptions());
       }
     });
 }
 
-function options() {
+function editOptions() {
   return data.fetchTodos()
-    .then(data => {
+    .then(results => {
+      data.list.todos = [];
+
+      results.forEach(result => {
+        data.list.todos.push({
+          name : result.todo,
+          value: result.id,
+          done : result.done
+        });
+      });
+
       data.listPreview();
 
       return prompt.editList();
     })
     .then(answer => {
       if (answer.option === 'Add todo') {
-        return prompt.add()
+        return prompt.addTodo()
           .then(answer => data.addTodo(answer.add))
-          .then(() => options());
+          .then(() => editOptions());
 
       } else if (answer.option === 'Remove todo') {
-        return prompt.remove(data.list.todos)
+        return prompt.removeTodo(data.list.todos)
           .then(answer => data.removeTodos(answer.remove))
-          .then(() => options());
+          .then(() => editOptions());
 
       } else if (answer.option === 'Delete list') {
-        return data.selectList()
+        return getLists()
           .then(lists => prompt.deleteList(lists))
           .then(answer => data.deleteList(answer.confirm))
-          .then(() => options());
+          .then(() => editOptions());
 
       } else if (answer.option === 'Mark as done') {
         return prompt.setTodoStatus(data.list.todos)
           .then(todos => data.setTodoStatus(todos.done))
-          .then(() => options());
+          .then(() => editOptions());
 
       } else if (answer.option === 'Change list') {
         return main();
 
       } else {
-        data.connection.end();
+        return data.connection.end();
       }
     });
+}
+
+function getLists() {
+  return new Promise(resolve => {
+    return data.fetchLists()
+      .then(result => {
+        let lists = [];
+
+        result.forEach(result => {
+          lists.push({name: result.list_name, value: result.list_id});
+        });
+
+        return resolve(lists);
+      });
+  });
 }
 
 clists();
